@@ -1,0 +1,16 @@
+{
+  "id": "spawn",
+  "type": "capability_descriptor",
+  "description": "Bootstrap a new Living Software instance from this genome. Copies kernel schema, capabilities, and public surface. Does not copy state (kernel.db, .env). The spawned instance inherits the protocol algebra but starts a fresh ontology.",
+  "inputs": {
+    "target": "absolute path for the new instance directory",
+    "name": "human-readable instance identifier"
+  },
+  "invariants": [
+    "spawned instance has zero entity records",
+    "spawned instance has one instance_identity record",
+    "spawned instance has identical schema to parent",
+    "spawned instance has identical capabilities to parent",
+    ".env is not copied — operator must fill in"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "01_protocol",
+  "name": "Protocol",
+  "description": "Record algebra. Defines the six operations (select, filter, join, transform, project, render) as pure functions over the kernel tables. No HTTP, no filesystem, no network at this layer.",
+  "invariants": [
+    "all operations accept a SQLite3 instance and return plain PHP arrays",
+    "no operations write to entities or schemas directly — writes go through capabilities layer",
+    "all operations are deterministic given the same DB state",
+    "no network calls, no file I/O, no shell_exec"
+  ],
+  "verified_by": "verify.php"
+}

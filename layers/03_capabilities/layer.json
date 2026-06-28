@@ -1,0 +1,12 @@
+{
+  "id": "03_capabilities",
+  "name": "Capabilities",
+  "description": "Deterministic transforms. Each capability is a pure function (input record + DB) -> output record. May call layers 00-02. Must not spawn processes, make network calls without a carrier record authorising it, or write to kernel tables directly except via the applications log.",
+  "invariants": [
+    "every capability has a {id}.json descriptor and a {id}.php implementation",
+    "every implementation exports exactly one function named {id}_invoke(array, SQLite3): array",
+    "every capability logs its application to the applications table",
+    "network-calling capabilities (webhook_out) must check for a carrier record before calling out"
+  ],
+  "verified_by": "verify.php"
+}

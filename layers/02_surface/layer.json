@@ -1,0 +1,13 @@
+{
+  "id": "02_surface",
+  "name": "Surface",
+  "description": "HTTP router and protocol adapters. Translates between network protocol (HTTP, CLI) and the record algebra. May call layers 00 and 01. No business logic — routing and serialisation only.",
+  "invariants": [
+    "all routes return JSON with a top-level 'ok' or 'error' field",
+    "all authenticated routes require bearer token",
+    "no capability logic in routing layer",
+    "4xx for client errors, 5xx for server errors",
+    "health endpoint always responds in < 100ms"
+  ],
+  "verified_by": "verify.php"
+}

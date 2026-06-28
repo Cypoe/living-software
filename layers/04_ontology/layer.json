@@ -1,0 +1,13 @@
+{
+  "id": "04_ontology",
+  "name": "Ontology",
+  "description": "Instance-local. User-defined entity types, templates, materialized views, domain records. This layer is NEVER copied by spawn — it belongs to the running instance only. Agents and users operate here.",
+  "invariants": [
+    "this layer contains only entity records, not code",
+    "no PHP files at this layer",
+    "records here may reference capabilities (layer 03) but not implement them",
+    "this layer is the only layer that changes during normal instance operation"
+  ],
+  "verified_by": null,
+  "spawnable": false
+}

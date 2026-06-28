@@ -1,0 +1,16 @@
+{
+  "id": "00_kernel",
+  "name": "Kernel",
+  "description": "Three-table quine. The only tables that may exist at this layer are: entities, schemas, carriers, applications, runtime_state. No application logic.",
+  "invariants": [
+    "entities table has columns: id, type, owner, body_ref, metadata_json, created_at",
+    "schemas table has columns: id, name, definition_json, created_at",
+    "carriers table has columns: id, entity_id, carrier_type, location, access_config_json, created_at",
+    "runtime_state table has columns: key, value, updated_at",
+    "applications table has columns: id, capability_id, input_ref, output_ref, result, applied_at",
+    "all primary keys are TEXT",
+    "foreign_keys pragma is ON",
+    "no stored procedures, triggers, or views at this layer"
+  ],
+  "verified_by": "verify.php"
+}
