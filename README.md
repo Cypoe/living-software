@@ -114,7 +114,33 @@ from any box and apply the full algebra to it.
 00_kernel        ─ entities × schemas × carriers + runtime_state
 ```
 
-See [docs/architecture.md](docs/architecture.md) and [docs/layers.md](docs/layers.md).
+---
+
+## Documentation
+
+### Setup
+
+| Doc | What it covers |
+|---|---|
+| [docs/setup/startup-guide.md](docs/setup/startup-guide.md) | Full step-by-step from zero to running instance |
+| [docs/setup/first-setup-dash-auth.md](docs/setup/first-setup-dash-auth.md) | Claim ownership, bootstrap admin dashboard, first ontology seed records |
+
+### Architecture
+
+| Doc | What it covers |
+|---|---|
+| [docs/architecture.md](docs/architecture.md) | Full system architecture |
+| [docs/layers.md](docs/layers.md) | Layer contracts and verification gates |
+| [docs/gossip.md](docs/gossip.md) | Instance gossip-merge protocol |
+| [docs/deploy-workflows.md](docs/deploy-workflows.md) | Git / FTP / SFTP deploy workflows and secret handling |
+
+### Process
+
+| Doc | What it covers |
+|---|---|
+| [docs/process/adr-pipeline.md](docs/process/adr-pipeline.md) | ADR, Plan, Session, Spike — types, state machines, templates, CI gates |
+
+---
 
 ## Quick Start
 
@@ -125,18 +151,28 @@ cd living-software
 
 # 2. Configure
 cp .env.example .env
-# fill in LS_GH_TOKEN, LS_ROOT, LS_DEPLOY_METHOD
+# fill in LS_GH_TOKEN, LS_ROOT, LS_AUTH_SECRET, LS_DEPLOY_METHOD
 
-# 3. Point webserver docroot at public/
+# 3. Initialise the kernel DB
+php kernel/init.php
+
+# 4. Point webserver docroot at public/
 # Apache: DocumentRoot /path/to/living-software/public
 # Nginx:  root /path/to/living-software/public;
 
-# 4. Add cron
+# 5. Add cron
 echo '* * * * * php /path/to/living-software/public/cron.php >> /var/log/ls.log 2>&1' | crontab -
 
-# 5. Verify
+# 6. Verify
 curl https://yourdomain.com/health
+
+# 7. Claim ownership (first time only)
+curl -X POST https://yourdomain.com/setup \
+  -H 'Content-Type: application/json' \
+  -d '{"secret": "your-LS_AUTH_SECRET"}'
 ```
+
+Full walkthrough: [docs/setup/startup-guide.md](docs/setup/startup-guide.md)
 
 ## Spawn a new instance
 
@@ -180,3 +216,11 @@ candidate → admissible → adopted
 
 Running instances emit `candidate` Issues. CI promotes to `admissible`. Merge
 advances `adopted_commit` in `runtime_state`.
+
+## Process lifecycle
+
+```
+Spike → ADR → Plan → Sessions → CI green → admissible → adopted
+```
+
+Every non-trivial decision is a record. See [docs/process/adr-pipeline.md](docs/process/adr-pipeline.md).
