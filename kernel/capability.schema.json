@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Living Software Capability",
+  "type": "object",
+  "required": ["id", "schema_in", "schema_out", "impl_type", "impl_ref"],
+  "properties": {
+    "id": {"type": "string"},
+    "schema_in": {"type": "string"},
+    "schema_out": {"type": "string"},
+    "impl_type": {"type": "string", "enum": ["deterministic", "stochastic", "hybrid"]},
+    "contract": {"type": ["object", "array", "string", "null"]},
+    "impl_ref": {"type": "string"}
+  },
+  "additionalProperties": true
+}
