@@ -2,7 +2,107 @@
 
 A self-hosting, protocol-algebraic substrate where **records are the only primitive**.
 
-Every concept — a task, a deployed webpage, a CI rule, a user’s theory of mind — is a row in the `entities` table. The system represents, deploys, versions, and evolves itself using the same record algebra it exposes to users.
+---
+
+## The Scale-Free Triad
+
+Everything in the system — a user's task, a deployed webpage, a CI rule,
+a running instance, the system itself — is one of three things, at every scale:
+
+```
+        ╔═══════════════╗
+        ║    ENTITY     ║  ← what a thing IS   (id, type, owner)
+        ╚═══════╤═══════╝
+                │ described by
+        ╔═══════▼═══════╗
+        ║    SCHEMA     ║  ← what shape it has (field definitions)
+        ╚═══════╤═══════╝
+                │ carried by
+        ╔═══════▼═══════╗
+        ║    CARRIER    ║  ← where its body lives (file, URL, DB row, blob)
+        ╚═══════════════╝
+```
+
+This triad is **scale-free**: it applies at every level of the system.
+
+```
+  At the data level:
+    entity  = a task record
+    schema  = { title: string, done: bool }
+    carrier = a row in kernel.db
+
+  At the capability level:
+    entity  = "webhook_out" capability
+    schema  = { input: candidate_record, output: github_issue_ref }
+    carrier = capabilities/webhook_out.php
+
+  At the instance level:
+    entity  = this running instance
+    schema  = { adopted_commit, deploy_method, health_check_url }
+    carrier = the server + kernel.db it runs on
+
+  At the system level:
+    entity  = Living Software itself
+    schema  = the layer contracts (layers/00–04/layer.json)
+    carrier = the GitHub repo + every spawned instance
+```
+
+The quine property: the schema table is itself an entity. The carrier table
+stores its own definition as a carrier. The system describes itself using
+itself — there is no external meta-level.
+
+### The Dyad inside the Triad
+
+Entity and Schema form the **core dyad** — the minimum needed to assert
+that something exists and has a shape. Carrier is the optional third: without
+it a record is abstract (a pure assertion). With it the record has a body
+that can be fetched, rendered, or executed.
+
+```
+  dyad  alone  →  abstract record     (a concept, a type definition)
+  triad         →  live record         (a file, a page, a running process)
+```
+
+A template entity with an `html` carrier is a webpage.
+A capability entity with a `php` carrier is executable logic.
+An instance entity with a `server` carrier is a running system.
+The same algebra, the same three roles, at every scale.
+
+### Recursive diagram
+
+```
+┌─ Living Software (entity) ──────────────────────────────────────┐
+│  schema  = layer contracts                                       │
+│  carrier = GitHub repo + instances                               │
+│                                                                  │
+│  ┌─ Instance (entity) ──────────────────────────────────────┐   │
+│  │  schema  = deploy_config record                          │   │
+│  │  carrier = server + kernel.db                            │   │
+│  │                                                          │   │
+│  │  ┌─ Capability (entity) ──────────────────────────────┐ │   │
+│  │  │  schema  = { input_schema, output_schema }         │ │   │
+│  │  │  carrier = capabilities/{id}.php                   │ │   │
+│  │  │                                                    │ │   │
+│  │  │  ┌─ Record (entity) ────────────────────────────┐ │ │   │
+│  │  │  │  schema  = user-defined type definition      │ │ │   │
+│  │  │  │  carrier = row in entities table             │ │ │   │
+│  │  │  │                                              │ │ │   │
+│  │  │  │  ┌─ Field value ──────────────────────────┐ │ │ │   │
+│  │  │  │  │  entity  = the value itself            │ │ │ │   │
+│  │  │  │  │  schema  = field type (string, ref…)   │ │ │ │   │
+│  │  │  │  │  carrier = JSON in metadata_json col   │ │ │ │   │
+│  │  │  │  └────────────────────────────────────────┘ │ │ │   │
+│  │  │  └──────────────────────────────────────────────┘ │ │   │
+│  │  └────────────────────────────────────────────────────┘ │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+Each box is an entity–schema–carrier triad. The nesting is not a hierarchy
+of types — it is the **same pattern at different scales**. You can start
+from any box and apply the full algebra to it.
+
+---
 
 ## Five Layers
 
@@ -29,7 +129,7 @@ cp .env.example .env
 
 # 3. Point webserver docroot at public/
 # Apache: DocumentRoot /path/to/living-software/public
-# Nginx: root /path/to/living-software/public;
+# Nginx:  root /path/to/living-software/public;
 
 # 4. Add cron
 echo '* * * * * php /path/to/living-software/public/cron.php >> /var/log/ls.log 2>&1' | crontab -
