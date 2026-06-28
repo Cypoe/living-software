@@ -10,17 +10,28 @@ jobs:
   deploy-sftp:
     name: SFTP/rsync deploy on CI success
     runs-on: ubuntu-latest
-    # Skip entirely if CI did not pass or SFTP is not configured
-    if: >
-      github.event.workflow_run.conclusion == 'success' &&
-      secrets.SFTP_HOST != '' &&
-      secrets.SFTP_USER != '' &&
-      secrets.SFTP_SSH_KEY != '' &&
-      secrets.SFTP_REMOTE_DIR != ''
+    if: github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@v4
 
+      # GitHub cannot compare secrets in if: expressions — gate via shell.
+      - name: Check SFTP secrets configured
+        id: check
+        env:
+          SFTP_HOST: ${{ secrets.SFTP_HOST }}
+          SFTP_USER: ${{ secrets.SFTP_USER }}
+          SFTP_SSH_KEY: ${{ secrets.SFTP_SSH_KEY }}
+          SFTP_REMOTE_DIR: ${{ secrets.SFTP_REMOTE_DIR }}
+        run: |
+          if [ -z "$SFTP_HOST" ] || [ -z "$SFTP_USER" ] || [ -z "$SFTP_SSH_KEY" ] || [ -z "$SFTP_REMOTE_DIR" ]; then
+            echo "SFTP secrets not configured — skipping deploy"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Setup SSH key
+        if: steps.check.outputs.skip != 'true'
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SFTP_SSH_KEY }}" > ~/.ssh/deploy_key
@@ -28,6 +39,7 @@ jobs:
           ssh-keyscan -p ${{ secrets.SFTP_PORT || '22' }} ${{ secrets.SFTP_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: rsync to remote
+        if: steps.check.outputs.skip != 'true'
         env:
           SFTP_HOST: ${{ secrets.SFTP_HOST }}
           SFTP_PORT: ${{ secrets.SFTP_PORT || '22' }}
@@ -45,11 +57,15 @@ jobs:
           echo "rsync deploy complete"
 
       - name: Notify instance
-        if: ${{ secrets.INSTANCE_UPDATE_URL != '' && secrets.INSTANCE_UPDATE_TOKEN != '' }}
+        if: steps.check.outputs.skip != 'true'
         env:
           INSTANCE_UPDATE_URL: ${{ secrets.INSTANCE_UPDATE_URL }}
           INSTANCE_UPDATE_TOKEN: ${{ secrets.INSTANCE_UPDATE_TOKEN }}
         run: |
+          if [ -z "$INSTANCE_UPDATE_URL" ] || [ -z "$INSTANCE_UPDATE_TOKEN" ]; then
+            echo "notify secrets not set, skipping ping"
+            exit 0
+          fi
           curl -s -X POST \
             -H "Authorization: Bearer ${INSTANCE_UPDATE_TOKEN}" \
             -H "Content-Type: application/json" \
