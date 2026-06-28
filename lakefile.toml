@@ -1,0 +1,15 @@
+name = "LivingSoftware"
+version = "0.1.0"
+defaultTargets = ["LivingSoftware"]
+
+[[lean_lib]]
+name = "LivingSoftware"
+roots = ["LivingSoftware.LivingSoftware"]
+
+[[lean_lib]]
+name = "Demo"
+roots = ["Demo.LivingAutomaton"]
+
+[[lean_exe]]
+name = "demo"
+root = "Demo.LivingAutomaton"
