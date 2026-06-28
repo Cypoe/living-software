@@ -1,0 +1,50 @@
+name: Deploy via FTP
+
+on:
+  workflow_run:
+    workflows: ["Living Software CI"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy-ftp:
+    name: FTP deploy on CI success
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via FTP (curl)
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASS: ${{ secrets.FTP_PASS }}
+          FTP_REMOTE_DIR: ${{ secrets.FTP_REMOTE_DIR }}
+        run: |
+          # Upload changed files via curl FTP
+          # Excludes: .git, .env, kernel/kernel.db
+          find . \
+            -not -path './.git/*' \
+            -not -name '.env' \
+            -not -path './kernel/kernel.db' \
+            -not -path './kernel/heartbeat.json' \
+            -type f | while read f; do
+              rel="${f#./}"
+              remote="ftp://${FTP_HOST}/${FTP_REMOTE_DIR}/${rel}"
+              curl -s --ftp-create-dirs \
+                -u "${FTP_USER}:${FTP_PASS}" \
+                -T "$f" "$remote"
+            done
+          echo "FTP deploy complete"
+
+      - name: Notify instance
+        if: ${{ env.INSTANCE_UPDATE_URL != '' }}
+        env:
+          INSTANCE_UPDATE_URL: ${{ secrets.INSTANCE_UPDATE_URL }}
+          INSTANCE_UPDATE_TOKEN: ${{ secrets.INSTANCE_UPDATE_TOKEN }}
+        run: |
+          curl -s -X POST \
+            -H "Authorization: Bearer ${INSTANCE_UPDATE_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"event\":\"deploy\",\"sha\":\"${{ github.event.workflow_run.head_sha }}\",\"method\":\"ftp\"}" \
+            "${INSTANCE_UPDATE_URL}/runtime/notify" || true

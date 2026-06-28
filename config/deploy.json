@@ -1,0 +1,13 @@
+{
+  "_comment": "Runtime deploy config record. Stored as a file here for bootstrap; also written into runtime_state on first boot.",
+  "id": "deploy_config",
+  "type": "deploy_config",
+  "repo_owner": "Cypoe",
+  "repo_name": "living-software",
+  "branch": "main",
+  "deploy_method": "git",
+  "health_check_path": "/health",
+  "cron_interval_seconds": 60,
+  "self_update": true,
+  "ci_required": true
+}

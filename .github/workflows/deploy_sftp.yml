@@ -1,0 +1,51 @@
+name: Deploy via SFTP/rsync
+
+on:
+  workflow_run:
+    workflows: ["Living Software CI"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy-sftp:
+    name: SFTP/rsync deploy on CI success
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SFTP_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.SFTP_PORT || '22' }} ${{ secrets.SFTP_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: rsync to remote
+        env:
+          SFTP_HOST: ${{ secrets.SFTP_HOST }}
+          SFTP_PORT: ${{ secrets.SFTP_PORT || '22' }}
+          SFTP_USER: ${{ secrets.SFTP_USER }}
+          SFTP_REMOTE_DIR: ${{ secrets.SFTP_REMOTE_DIR }}
+        run: |
+          rsync -az --delete \
+            --exclude='.git' \
+            --exclude='.env' \
+            --exclude='kernel/kernel.db' \
+            --exclude='kernel/heartbeat.json' \
+            -e "ssh -p ${SFTP_PORT} -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            ./ \
+            "${SFTP_USER}@${SFTP_HOST}:${SFTP_REMOTE_DIR}/"
+          echo "rsync deploy complete"
+
+      - name: Notify instance
+        if: ${{ env.INSTANCE_UPDATE_URL != '' }}
+        env:
+          INSTANCE_UPDATE_URL: ${{ secrets.INSTANCE_UPDATE_URL }}
+          INSTANCE_UPDATE_TOKEN: ${{ secrets.INSTANCE_UPDATE_TOKEN }}
+        run: |
+          curl -s -X POST \
+            -H "Authorization: Bearer ${INSTANCE_UPDATE_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"event\":\"deploy\",\"sha\":\"${{ github.event.workflow_run.head_sha }}\",\"method\":\"sftp\"}" \
+            "${INSTANCE_UPDATE_URL}/runtime/notify" || true
