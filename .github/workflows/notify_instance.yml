@@ -1,0 +1,24 @@
+name: Notify Deployed Instance
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  notify:
+    name: Yell at deployed instance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping instance update endpoint
+        run: |
+          if [ -n "${{ secrets.INSTANCE_UPDATE_URL }}" ]; then
+            curl -s -X POST \
+              -H "Authorization: Bearer ${{ secrets.INSTANCE_UPDATE_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d '{"event":"push","sha":"${{ github.sha }}","ref":"${{ github.ref }}"}' \
+              "${{ secrets.INSTANCE_UPDATE_URL }}/runtime/notify" \
+              && echo "Instance notified" \
+              || echo "Instance unreachable (non-fatal)"
+          else
+            echo "INSTANCE_UPDATE_URL not set, skipping notification"
+          fi

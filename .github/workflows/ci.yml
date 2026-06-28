@@ -1,0 +1,50 @@
+name: Living Software CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  admissibility:
+    name: Admissibility Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: sqlite3
+
+      - name: PHP lint — kernel and public
+        run: |
+          find public kernel tests -name '*.php' | xargs -I{} php -l {}
+
+      - name: JSON Schema validation — capability descriptors
+        run: |
+          php tests/validate_capabilities.php
+
+      - name: SQL smoke boot
+        run: |
+          php tests/sql_smoke.php
+
+      - name: Structural admissibility
+        run: |
+          php tests/admissibility.php
+
+      - name: Behavioral golden tests
+        run: |
+          php tests/golden.php
+
+      - name: Meta-tests (CI must catch bad states)
+        run: |
+          php tests/meta.php
+
+      - name: Mark admissible commit
+        if: github.ref == 'refs/heads/main' && success()
+        run: |
+          echo ${{ github.sha }} > .admissible_commit
+          echo "Admissible commit: ${{ github.sha }}"
