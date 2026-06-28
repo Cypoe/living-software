@@ -10,7 +10,13 @@ jobs:
   deploy-sftp:
     name: SFTP/rsync deploy on CI success
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Skip entirely if CI did not pass or SFTP is not configured
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      secrets.SFTP_HOST != '' &&
+      secrets.SFTP_USER != '' &&
+      secrets.SFTP_SSH_KEY != '' &&
+      secrets.SFTP_REMOTE_DIR != ''
     steps:
       - uses: actions/checkout@v4
 
@@ -39,7 +45,7 @@ jobs:
           echo "rsync deploy complete"
 
       - name: Notify instance
-        if: ${{ env.INSTANCE_UPDATE_URL != '' }}
+        if: ${{ secrets.INSTANCE_UPDATE_URL != '' && secrets.INSTANCE_UPDATE_TOKEN != '' }}
         env:
           INSTANCE_UPDATE_URL: ${{ secrets.INSTANCE_UPDATE_URL }}
           INSTANCE_UPDATE_TOKEN: ${{ secrets.INSTANCE_UPDATE_TOKEN }}

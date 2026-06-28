@@ -10,7 +10,13 @@ jobs:
   deploy-ftp:
     name: FTP deploy on CI success
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Skip entirely if CI did not pass or FTP is not configured
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      secrets.FTP_HOST != '' &&
+      secrets.FTP_USER != '' &&
+      secrets.FTP_PASS != '' &&
+      secrets.FTP_REMOTE_DIR != ''
     steps:
       - uses: actions/checkout@v4
 
@@ -21,8 +27,6 @@ jobs:
           FTP_PASS: ${{ secrets.FTP_PASS }}
           FTP_REMOTE_DIR: ${{ secrets.FTP_REMOTE_DIR }}
         run: |
-          # Upload changed files via curl FTP
-          # Excludes: .git, .env, kernel/kernel.db
           find . \
             -not -path './.git/*' \
             -not -name '.env' \
@@ -38,7 +42,7 @@ jobs:
           echo "FTP deploy complete"
 
       - name: Notify instance
-        if: ${{ env.INSTANCE_UPDATE_URL != '' }}
+        if: ${{ secrets.INSTANCE_UPDATE_URL != '' && secrets.INSTANCE_UPDATE_TOKEN != '' }}
         env:
           INSTANCE_UPDATE_URL: ${{ secrets.INSTANCE_UPDATE_URL }}
           INSTANCE_UPDATE_TOKEN: ${{ secrets.INSTANCE_UPDATE_TOKEN }}
