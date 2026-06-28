@@ -1,0 +1,15 @@
+{
+  "id": "gossip_merge",
+  "schema_in": "gossip_delta",
+  "schema_out": "merge_result",
+  "impl_type": "deterministic",
+  "contract": {
+    "invariants": [
+      "merge is idempotent: applying same delta twice produces same state",
+      "non-conflicting deltas are unioned without data loss",
+      "conflicting deltas produce conflict_record, never silent overwrite",
+      "adopted commit ancestry is preserved in runtime_state"
+    ]
+  },
+  "impl_ref": "gossip_merge.php"
+}

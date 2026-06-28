@@ -1,0 +1,14 @@
+{
+  "id": "webhook_out",
+  "schema_in": "candidate_record",
+  "schema_out": "github_issue_ref",
+  "impl_type": "deterministic",
+  "contract": {
+    "invariants": [
+      "emits at most one issue per unique candidate id",
+      "does not write to entities table directly",
+      "idempotent: calling twice with same input produces same issue (deduped by title)"
+    ]
+  },
+  "impl_ref": "webhook_out.php"
+}
